@@ -254,6 +254,19 @@ public class InjectedMain {
             String methodName = (method == null ? null : method.name);
             if (method != null) {
                 if (method.method != null) {
+                    if (method.name.equals("getDeviceIdForPhone")) {
+                        log("getDeviceId called");
+
+                        final String DESCRIPTOR = "com.android.internal.telephony.IPhoneSubInfo";
+                        data.enforceInterface(DESCRIPTOR);
+                        int _arg0;
+                        _arg0 = data.readInt();
+                        java.lang.String _result = "112233445566778";
+                        reply.writeNoException();
+                        reply.writeString(_result);
+                        return true;
+                    }
+
                     // log matching method signature (stripping 'public' and the class name)
                     log("BinderJack: %d: %s", code, method.method.toString().replace(target.getClass().getCanonicalName() + ".", "").replace("public ", ""));
                 } else {
@@ -305,9 +318,16 @@ public class InjectedMain {
 
     private void binderJackActivityService() {
         try {
+            String servicename = "iphonesubinfo";
+
             // Double check we're in the process that defined the Context.ACTIVITY_SERVICE service
             IBinder activityService = getService(Context.ACTIVITY_SERVICE);
             log("ActivityService:%s original:%s", activityService.getClass().getName(), isOriginalBinder(activityService) ? "true" : "false");
+
+            IBinder activityService2 = getService(servicename);
+//            IBinder activityService2 = getService("location");
+            log("ActivityService2:%s original:%s", activityService2.getClass().getName(), isOriginalBinder(activityService2) ? "true" : "false");
+            activityService = activityService2;
 
             if (isOriginalBinder(activityService)) {
                 // Hijack ActivityService (note that this trick only works with Binders
@@ -337,13 +357,15 @@ public class InjectedMain {
                 Field fCache = cServiceManager.getDeclaredField("sCache");
                 fCache.setAccessible(true);
                 @SuppressWarnings("unchecked") Map<String, IBinder> sCache = (Map<String, IBinder>)fCache.get(null);
-                sCache.put(Context.ACTIVITY_SERVICE, activityService);
+//                sCache.put(Context.ACTIVITY_SERVICE, activityService);
+                sCache.put(servicename, activityService);
 
                 // Swap out native JNI reference to original Binder with BinderJack's
                 hijackJavaBinder(binder, binderJack);
 
                 // For debugging, verify this is ActivityManagerService
-                log(getService(Context.ACTIVITY_SERVICE).getClass().getName());
+//                log(getService(Context.ACTIVITY_SERVICE).getClass().getName());
+                log(getService(servicename).getClass().getName());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -390,8 +412,11 @@ public class InjectedMain {
             application.getApplicationContext().sendBroadcast(intent);
 
             // Target-specific action
+//            if ((currentPackageName != null) && currentPackageName.equals("com.android.settings")) {
             if ((currentPackageName != null) && currentPackageName.equals("com.android.settings")) {
                 makeAppPurple();
+            } else if ((currentPackageName != null) && currentPackageName.equals("com.android.phone")) {
+                binderJackActivityService();
             } else if (currentPackageName == null) { // system_server ?
                 binderJackActivityService();
             }

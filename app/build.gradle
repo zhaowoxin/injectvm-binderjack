@@ -10,21 +10,27 @@ android {
         versionName "1.0"
         externalNativeBuild {
             cmake {
-                cppFlags "-Wall", "-Werror", "-fpermissive", "-fpic", "-Os", "-fdata-sections", "-ffunction-sections", "-fvisibility=hidden", "-Wno-error=strict-aliasing"
+                cppFlags "-Wall", "-fpermissive", "-fpic", "-Os", "-fdata-sections", "-ffunction-sections", "-fvisibility=hidden", "-Wno-error=strict-aliasing"
             }
         }
         ndk {
-            abiFilters "armeabi", "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+        dexOptions{
+            preDexLibraries  false
+            multiDexEnabled false
         }
     }
     buildTypes {
         release {
+            multiDexEnabled false
             minifyEnabled true
             useProguard true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             // make sure our ProGuard rules are correct
+            multiDexEnabled false
             minifyEnabled true
             useProguard true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

@@ -4,6 +4,7 @@
 package eu.chainfire.injectvm;
 
 import androidx.appcompat.app.AppCompatActivity;
+import dalvik.system.PathClassLoader;
 import eu.chainfire.injectvm.injected.IInjectedComms;
 import eu.chainfire.injectvm.injected.InjectedMain;
 import eu.chainfire.libsuperuser.Shell;
@@ -18,6 +19,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -106,12 +108,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void uiLog(final String format, final Object... args) {
+        final String logx = String.format(Locale.ENGLISH, format + "\n", args);
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                textView.append(String.format(Locale.ENGLISH, format + "\n", args));
+                textView.append(logx);
             }
         });
+
+        Log.i("uilog", logx);
     }
 
     public void showNoRootMessage() {
@@ -122,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onPurpleSettingsClick(View view) {
-        (new InjectTask(this)).execute("com.android.settings");
+        (new InjectTask(this)).execute("com.android.phone");
     }
 
     public void onSystemServerClick(View view) {
@@ -199,31 +205,31 @@ public class MainActivity extends AppCompatActivity {
                     });
     
                     // Kill and restart target (if app-style process) for repeatability
-                    if (target.contains(".")) { // Naive Process == packageName ?
-                        // Kill the process if it's already running
-                        int pid = getPid(target);
-                        if (pid >= 0) {
-                            act.uiLog("%s: killing pid %d", target, pid);
-                            Shell.Pool.SU.run("kill -9 " + pid);
-                            try {
-                                // Give it some time to die
-                                Thread.sleep(1000);
-                            } catch (Exception e) {
-                                // no action
-                            }
-                        }
-    
-                        // Restart it
-                        act.uiLog("%s: starting", target);
-                        act.startActivity(act.getPackageManager().getLaunchIntentForPackage(target));
-    
-                        // Give package some time to start up
-                        try {
-                            Thread.sleep(1000);
-                        } catch (Exception e) {
-                            // no action
-                        }
-                    }
+//                    if (target.contains(".")) { // Naive Process == packageName ?
+//                        // Kill the process if it's already running
+//                        int pid = getPid(target);
+//                        if (pid >= 0) {
+//                            act.uiLog("%s: killing pid %d", target, pid);
+//                            Shell.Pool.SU.run("kill -9 " + pid);
+//                            try {
+//                                // Give it some time to die
+//                                Thread.sleep(1000);
+//                            } catch (Exception e) {
+//                                // no action
+//                            }
+//                        }
+//
+//                        // Restart it
+//                        act.uiLog("%s: starting", target);
+//                        act.startActivity(act.getPackageManager().getLaunchIntentForPackage(target));
+//
+//                        // Give package some time to start up
+//                        try {
+//                            Thread.sleep(1000);
+//                        } catch (Exception e) {
+//                            // no action
+//                        }
+//                    }
     
                     // get pid for target
                     int pid = getPid(target);

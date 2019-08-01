@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <string.h>
 
 #include <thread>
 #include <string>
@@ -46,6 +47,7 @@ static jclass loadClass(JNIEnv* env, jobject classLoader, const char* packagePat
     LOGD("loadClass");
 
     // Create PathClassLoader: new PathClassLoader(packagePath, classLoader)
+//    dalvik.system.PathClassLoader;
     jclass PathClassLoader = env->FindClass("dalvik/system/PathClassLoader");
     jmethodID pclCtor = env->GetMethodID(PathClassLoader, "<init>", "(Ljava/lang/String;Ljava/lang/ClassLoader;)V");
 
@@ -58,6 +60,13 @@ static jclass loadClass(JNIEnv* env, jobject classLoader, const char* packagePat
 
     jstring injectClass = env->NewStringUTF(className);
     jclass InjectClass = (jclass)env->CallObjectMethod(pcl, loadClass, injectClass);
+    if (InjectClass == NULL) {
+        if ((env)->ExceptionCheck()) {
+            (env)->ExceptionDescribe();
+            (env)->ExceptionClear();
+        }
+    }
+    LOGD("loadClass， inject class is %x, %s, %x, %x", InjectClass, className, pcl, loadClass);
     env->DeleteLocalRef(injectClass);
 
     return InjectClass;
@@ -130,6 +139,13 @@ static void inject_thread(JavaVM* jvm, jobject classLoader, char* apk, char* cla
 
         // Load clazz from APK
         jclass InjectClass = loadClass(env, classLoader, apk, clazz);
+
+        if (InjectClass == NULL) {
+            LOGI("loadclass is null");
+            res = jvm->DetachCurrentThread();
+
+            return;
+        }
 
         // Attach native methods
         env->RegisterNatives(InjectClass, nativeMethods, 1);
